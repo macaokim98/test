@@ -9,7 +9,7 @@ yarn.lock
 *.env
 .cursor/
 
-# 문제가 있는 중첩된 Git 저장소들
+# 모든 중첩된 Git 저장소들 (문제 있는 프로젝트들)
 planetary_gear_calculator/
 FWPAVS/
 MyManimProjects/
@@ -29,6 +29,15 @@ mcp-rag-starter/
 mcp-server-fs/
 mcp-sever-starter/
 servers/
+manim-GearBox/
+manim-gearbox-opengl-mesh-stress-caculation/
+manim-notebook/
+manim-spurgear-animation/
+manim-torsion-test/
+planetry-gear-project/
+seo-dashboard-starter/
+streamlit-cursor-project-starter/
+streamlit-linegraph/
 
 # Build outputs
 dist/
