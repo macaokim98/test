@@ -1,0 +1,52 @@
+﻿# Dependencies
+node_modules/
+*/node_modules/
+package-lock.json
+yarn.lock
+
+# Environment files
+.env
+*.env
+.cursor/
+
+# 문제가 있는 중첩된 Git 저장소들
+planetary_gear_calculator/
+FWPAVS/
+MyManimProjects/
+browser-tools-mcp/
+browser-tools/
+fastmcp/
+filesystem/
+finanancedata-starter/
+gemini_analytics_streamlit/
+hwp-mcp/
+langgraph-dynamic-mcp-agents/
+manim/
+manim_auto_setup/
+manimgl-test/
+markitdown/
+mcp-rag-starter/
+mcp-server-fs/
+mcp-sever-starter/
+servers/
+
+# Build outputs
+dist/
+build/
+.next/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
