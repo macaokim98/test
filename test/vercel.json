@@ -1,0 +1,13 @@
+{
+  "name": "health-content-aggregator",
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "env": {
+    "YOUTUBE_API_KEY": "@youtube-api-key"
+  }
+}
