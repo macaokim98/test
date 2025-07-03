@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { YouTubeVideo, getRandomHealthContent } from '@/lib/youtube'
+import { YouTubeVideo, getRandomHealthContent, searchYouTubeVideos } from '@/lib/youtube'
 import { useDarkMode } from './hooks/useDarkMode'
 import HealthCard from './components/HealthCard'
 
 export default function Home() {
   const [videos, setVideos] = useState<YouTubeVideo[]>([])
   const [loading, setLoading] = useState(true)
+  const [healthLoading, setHealthLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { isDarkMode, toggleDarkMode, mounted } = useDarkMode()
 
@@ -20,10 +21,13 @@ export default function Home() {
     setError(null)
     try {
       const healthVideos = await getRandomHealthContent()
+      if (healthVideos.length === 0) {
+        throw new Error('검색 결과가 없습니다. 다시 시도해주세요.')
+      }
       setVideos(healthVideos)
     } catch (error: any) {
       console.error('Error loading health content:', error)
-      setError(error.message)
+      setError(`콘텐츠 로딩 실패: ${error.message}`)
     } finally {
       setLoading(false)
     }
@@ -31,6 +35,68 @@ export default function Home() {
 
   const handleRefresh = () => {
     loadHealthContent()
+  }
+
+  const handleHealthSearch = async () => {
+    setHealthLoading(true)
+    setError(null)
+    
+    // 확장된 한국어 건강 키워드 (더 많은 다양성)
+    const healthCategories = [
+      '요가', '필라테스', '스트레칭', '명상', '마음챙김',
+      '홈트레이닝', '운동', '피트니스', 'HIIT', '유산소',
+      '다이어트', '식단', '영양', '건강식', '체중감량',
+      '수면', '잠', '불면증', '휴식', '회복',
+      '정신건강', '스트레스', '우울', '불안', '힐링',
+      '건강관리', '웰빙', '라이프스타일', '건강습관', '자기계발'
+    ]
+    
+    const healthModifiers = [
+      '초보자', '집에서', '쉬운', '10분', '15분', '20분',
+      '매일', '아침', '저녁', '간단한', '효과적인', '전문가'
+    ]
+    
+    // 랜덤 조합 생성 (더 많은 가능성)
+    const randomCategory = healthCategories[Math.floor(Math.random() * healthCategories.length)]
+    const randomModifier = healthModifiers[Math.floor(Math.random() * healthModifiers.length)]
+    const randomKeyword = Math.random() > 0.5 
+      ? `${randomModifier} ${randomCategory}` 
+      : `${randomCategory} ${randomModifier}`
+    
+    try {
+      console.log(`🏥 건강 검색 (#${Date.now()}): "${randomKeyword}"`)
+      const healthVideos = await searchYouTubeVideos(randomKeyword, 12)
+      
+      if (healthVideos.length === 0) {
+        // 검색 결과가 없으면 다른 키워드로 재시도
+        const fallbackKeyword = healthCategories[Math.floor(Math.random() * healthCategories.length)]
+        console.log(`🔄 재시도: "${fallbackKeyword}"`)
+        const fallbackVideos = await searchYouTubeVideos(fallbackKeyword, 12)
+        
+        // 랜덤하게 5개 선택 (더 강한 랜덤성)
+        const randomVideos = fallbackVideos
+          .sort(() => Math.random() - 0.5)
+          .sort(() => Math.random() - 0.5) // 두 번 섞기
+          .slice(0, 5)
+        
+        setVideos(randomVideos)
+      } else {
+        // 랜덤하게 5개 선택 (더 강한 랜덤성)
+        const randomVideos = healthVideos
+          .sort(() => Math.random() - 0.5)
+          .sort(() => Math.random() - 0.5) // 두 번 섞기
+          .slice(0, 5)
+        
+        setVideos(randomVideos)
+      }
+    } catch (error: any) {
+      console.error('Error searching health videos:', error)
+      setError(`건강 검색 실패: ${error.message}`)
+      // 에러 시에도 빈 배열로 설정 (무한 로딩 방지)
+      setVideos([])
+    } finally {
+      setHealthLoading(false)
+    }
   }
 
   const handleVideoSave = (video: YouTubeVideo) => {
@@ -74,10 +140,39 @@ export default function Home() {
             </div>
             <h1 className={`text-xl font-bold transition-colors ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>HealthTube</h1>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1">
+            {/* 건강 버튼 */}
+            <button
+              onClick={handleHealthSearch}
+              className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-1 ${isDarkMode ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}`}
+              disabled={healthLoading || loading}
+            >
+              <span className="text-sm">❤️</span>
+              <span className="text-xs font-medium hidden sm:inline">건강</span>
+              {healthLoading && (
+                <svg className="w-3 h-3 animate-spin ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              )}
+            </button>
+
+            {/* 새로고침 버튼 */}
+            <button
+              onClick={handleRefresh}
+              className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              disabled={loading || healthLoading}
+              title="새로고침"
+            >
+              <svg className={`w-5 h-5 transition-colors ${loading ? 'animate-spin' : ''} ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+
+            {/* 다크모드 토글 */}
             <button
               onClick={toggleDarkMode}
               className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              title={isDarkMode ? '라이트 모드' : '다크 모드'}
             >
               {isDarkMode ? (
                 <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
@@ -88,15 +183,6 @@ export default function Home() {
                   <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                 </svg>
               )}
-            </button>
-            <button
-              onClick={handleRefresh}
-              className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-              disabled={loading}
-            >
-              <svg className={`w-6 h-6 transition-colors ${loading ? 'animate-spin' : ''} ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
             </button>
           </div>
         </div>
@@ -130,7 +216,7 @@ export default function Home() {
 
         {/* Content Grid */}
         <div className="space-y-4">
-          {loading ? (
+          {(loading || healthLoading) ? (
             // Loading State (shimmer effect like health-app.html)
             <>
               {[...Array(3)].map((_, i) => (
@@ -155,7 +241,7 @@ export default function Home() {
         </div>
 
         {/* Empty State */}
-        {!loading && videos.length === 0 && !error && (
+        {!loading && !healthLoading && videos.length === 0 && !error && (
           <div className="text-center py-12">
             <div className={`w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center transition-colors ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
               <svg className={`w-12 h-12 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
